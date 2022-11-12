@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+</head>
+<body>
+    <form>
+        <p><label for="username">Username</label><input type="text" id="username"></p>
+        <p><label for="email">E-mail</label><input type="text" id="email"></p>
+        <p><label for="password">Password</label><input type="text"id="password"></p>
+        <input type="button" value="Register" id="register">
+    </form>
+    <script>
+        register.addEventListener('click', () => {
+            const data = {
+                username: username.value,
+                email: email.value,
+                password: password.value
+            }
+
+            const uri = 'http://localhost:3000/signUp'
+            fetch(uri, {
+                method: 'POST',
+                headers: {
+                    'Content-Type':'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .catch(err => console.log(err))
+        })
+    </script>
+</body>
+</html>
