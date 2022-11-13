@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -30,7 +33,7 @@ func connectDB() *mongo.Client {
 
 	c, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
 	return c
 }
@@ -50,19 +53,30 @@ func main() {
 		var data User
 		err := ctx.BindJSON(&data)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatal(err)
 		}
 		fmt.Println(data)
 
-		//TODO: password hashing
+		//TODO:
 		//		email regex
-		//		email verification
+		//		email verification / email cant be a duplicate
 		//		access tokens
 
-		_, err = cTest.InsertOne(context.Background(), bson.M{"Username": data.Username, "E-mail": data.Email, "Password": data.Password})
+		cost, _ := strconv.Atoi(os.Getenv("COST"))
+		hash, err := bcrypt.GenerateFromPassword([]byte(data.Password), cost)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		_, err = cTest.InsertOne(context.Background(), bson.M{"Username": data.Username, "E-mail": data.Email, "Password": hash})
 		if err != nil {
 			fmt.Println(err)
 		}
+
+		// err = bcrypt.CompareHashAndPassword(hash, []byte(data.Password))
+		// if err != nil {
+		// 	fmt.Println(err)
+		// }
 	})
 
 	router.Run()
