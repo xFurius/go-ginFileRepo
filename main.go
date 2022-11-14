@@ -18,7 +18,6 @@ import (
 )
 
 type User struct {
-	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -68,7 +67,13 @@ func main() {
 			log.Fatal(err)
 		}
 
-		_, err = cTest.InsertOne(context.Background(), bson.M{"Username": data.Username, "E-mail": data.Email, "Password": hash})
+		res := cTest.FindOne(context.Background(), bson.M{"E-mail": data.Email})
+		if res.Err() == nil {
+			ctx.Status(http.StatusForbidden)
+			return
+		}
+
+		_, err = cTest.InsertOne(context.Background(), bson.M{"E-mail": data.Email, "Password": hash})
 		if err != nil {
 			fmt.Println(err)
 		}

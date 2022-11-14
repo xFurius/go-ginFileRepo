@@ -8,7 +8,6 @@
 </head>
 <body>
     <form>
-        <p><label for="username">Username</label><input type="text" id="username"></p>
         <p><label for="email">E-mail</label><input type="text" id="email"></p>
         <p><label for="password">Password</label><input type="text"id="password"></p>
         <input type="button" value="Register" id="register">
@@ -16,9 +15,14 @@
     <script>
         register.addEventListener('click', () => {
             const data = {
-                username: username.value,
                 email: email.value,
                 password: password.value
+            }
+
+            if(password.value == ""){
+                password.style.backgroundColor = 'red'
+            }else{
+                password.style.backgroundColor = 'white'
             }
 
             const uri = 'http://localhost:3000/signUp'
@@ -29,7 +33,15 @@
                 },
                 body: JSON.stringify(data),
             })
-            .then(response => response.json())
+            .then(response => {
+                response.json()
+                if (response.status == 403){
+                    console.log("duplicate")
+                    email.style.backgroundColor = 'red'
+                }else{
+                    email.style.backgroundColor = 'white'
+                }
+            })
             .catch(err => console.log(err))
         })
     </script>
