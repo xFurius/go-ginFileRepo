@@ -8,8 +8,8 @@
 </head>
 <body>
     <form>
-        <p><label for="email">E-mail</label><input type="text" id="email"></p>
-        <p><label for="password">Password</label><input type="text"id="password"></p>
+        <p><label for="email">E-mail</label><input type="text" id="email" required></p>
+        <p><label for="password">Password</label><input type="text"id="password" required></p>
         <input type="button" value="Register" id="register">
     </form>
     <script>
@@ -17,12 +17,6 @@
             const data = {
                 email: email.value,
                 password: password.value
-            }
-
-            if(password.value == ""){
-                password.style.backgroundColor = 'red'
-            }else{
-                password.style.backgroundColor = 'white'
             }
 
             const uri = 'http://localhost:3000/signUp'
