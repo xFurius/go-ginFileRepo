@@ -185,6 +185,15 @@ func signOut(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+func upload(ctx *gin.Context) {
+	file, err := ctx.FormFile("test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = ctx.SaveUploadedFile(file, "./files/"+file.Filename) //change path
+	fmt.Println(err)
+}
+
 func main() {
 	client := connectDB()
 	db = client.Database("go-ginFileRepo").Collection("Users")
@@ -210,6 +219,11 @@ func main() {
 	user.GET("/viewFiles", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, bson.M{"status": 200})
 	})
+	user.GET("/upload", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "upload.html", nil)
+	})
+
+	user.POST("/upload", upload)
 
 	router.GET("/signOut", signOut)
 
