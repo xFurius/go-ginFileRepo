@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -24,7 +25,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var db *mongo.Collection
+var usersCol *mongo.Collection
+var filesCol *mongo.Collection
 
 type User struct {
 	Email    string `json:"email"`
@@ -64,13 +66,13 @@ func signUp(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	res := db.FindOne(context.Background(), bson.M{"E-mail": data.Email})
+	res := usersCol.FindOne(context.Background(), bson.M{"E-mail": data.Email})
 	if res.Err() == nil {
 		ctx.Status(http.StatusNoContent)
 		return
 	}
 
-	_, err = db.InsertOne(context.Background(), bson.M{"E-mail": data.Email, "Password": hash})
+	_, err = usersCol.InsertOne(context.Background(), bson.M{"E-mail": data.Email, "Password": hash})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -86,7 +88,7 @@ func signIn(ctx *gin.Context) {
 	fmt.Println(data)
 
 	var dbRes User
-	res := db.FindOne(context.Background(), bson.M{"E-mail": data.Email})
+	res := usersCol.FindOne(context.Background(), bson.M{"E-mail": data.Email})
 	if res.Err() != nil {
 		ctx.Status(http.StatusNotFound)
 		return
@@ -107,7 +109,7 @@ func signIn(ctx *gin.Context) {
 	}
 	fmt.Println("valid data")
 
-	token, err := generateToken(_id, dbRes.Email)
+	token, err := generateToken(_id, data.Email)
 	if err != nil {
 		ctx.Status(http.StatusForbidden)
 		fmt.Println(err)
@@ -128,24 +130,27 @@ func generateToken(userID, userEmail string) (string, error) {
 	claims["_id"] = userID
 	claims["sub"] = userEmail
 
+	fmt.Println(claims)
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return token.SignedString([]byte(os.Getenv("TOKEN_SECRET")))
 
 }
 
-func validateToken(ctx *gin.Context) error {
+func validateToken(ctx *gin.Context) (error, jwt.MapClaims) {
 	token := getToken(ctx)
-	_, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
+			return errors.New("unexpected signing method"), nil
 		}
 		return []byte(os.Getenv("TOKEN_SECRET")), nil
 	})
 	if err != nil {
-		return err
+		return err, nil
 	}
-	return nil
+	return nil, claims
 }
 
 func getToken(ctx *gin.Context) string {
@@ -160,7 +165,7 @@ func getToken(ctx *gin.Context) string {
 func JWTMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fmt.Println(ctx.Request.Cookie("token"))
-		err := validateToken(ctx)
+		err, _ := validateToken(ctx)
 		if err != nil {
 			ctx.Status(http.StatusUnauthorized)
 			ctx.Abort()
@@ -190,13 +195,31 @@ func upload(ctx *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = ctx.SaveUploadedFile(file, "./files/"+file.Filename) //change path
+	source := rand.NewSource(time.Now().Unix())
+	r := source.Int63() // limit the generated integers number
+	fmt.Println(int(r))
+	filename := strconv.Itoa(int(r)) + file.Filename
+	filesCol.InsertOne(context.Background(), bson.M{"E-mail": getEmail(ctx), "FileName": filename})
+	err = ctx.SaveUploadedFile(file, "./files/"+filename)
 	fmt.Println(err)
+}
+
+// get email form token
+func getEmail(ctx *gin.Context) string {
+	err, claims := validateToken(ctx)
+	if err != nil {
+		ctx.Status(http.StatusForbidden)
+	}
+
+	fmt.Println(claims)
+
+	return claims["sub"].(string)
 }
 
 func main() {
 	client := connectDB()
-	db = client.Database("go-ginFileRepo").Collection("Users")
+	usersCol = client.Database("go-ginFileRepo").Collection("Users")
+	filesCol = client.Database("go-ginFileRepo").Collection("Files")
 
 	router := gin.Default()
 	router.LoadHTMLGlob("./html/*")
