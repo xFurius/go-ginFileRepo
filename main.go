@@ -37,6 +37,7 @@ func init() {
 	godotenv.Load(".env")
 }
 
+// database connection
 func connectDB() *mongo.Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -48,6 +49,7 @@ func connectDB() *mongo.Client {
 	return c
 }
 
+// sign up
 func signUp(ctx *gin.Context) {
 	var data User
 	err := ctx.BindJSON(&data)
@@ -79,6 +81,7 @@ func signUp(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+// sign in
 func signIn(ctx *gin.Context) {
 	var data User
 	err := ctx.BindJSON(&data)
@@ -124,6 +127,7 @@ func signIn(ctx *gin.Context) {
 	}
 }
 
+// token generation
 func generateToken(userID, userEmail string) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["role"] = "user"
@@ -138,6 +142,7 @@ func generateToken(userID, userEmail string) (string, error) {
 
 }
 
+// token validation
 func validateToken(ctx *gin.Context) (error, jwt.MapClaims) {
 	token := getToken(ctx)
 	claims := jwt.MapClaims{}
@@ -153,6 +158,7 @@ func validateToken(ctx *gin.Context) (error, jwt.MapClaims) {
 	return nil, claims
 }
 
+// retreving token from session
 func getToken(ctx *gin.Context) string {
 	session := sessions.Default(ctx)
 	token := session.Get("token")
@@ -162,6 +168,7 @@ func getToken(ctx *gin.Context) string {
 	return ""
 }
 
+// jwt middleware
 func JWTMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fmt.Println(ctx.Request.Cookie("token"))
@@ -175,6 +182,7 @@ func JWTMiddleware() gin.HandlerFunc {
 	}
 }
 
+// sign out
 func signOut(ctx *gin.Context) {
 	if token := getToken(ctx); token == "" {
 		ctx.Status(http.StatusUnauthorized)
@@ -190,6 +198,7 @@ func signOut(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+// upload
 func upload(ctx *gin.Context) {
 	file, err := ctx.FormFile("test")
 	if err != nil {
@@ -216,6 +225,42 @@ func getEmail(ctx *gin.Context) string {
 	return claims["sub"].(string)
 }
 
+// displaying files uploaded by logged in user
+func viewFiles(ctx *gin.Context) {
+	user := getEmail(ctx)
+	cursor, err := filesCol.Find(context.Background(), bson.D{{"E-mail", user}})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	var res []bson.M
+	if err = cursor.All(context.Background(), &res); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(res)
+
+	// files := make([]string, 0)
+	for _, v := range res {
+		fmt.Fprintln(ctx.Writer, v["FileName"])
+		// files = append(files, v["FileName"].(string))
+	}
+
+	// fmt.Println(files)
+
+	// f, err := ioutil.ReadDir("./files")
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+
+	// for _, v := range f {
+	// 	fmt.Println(v.Name())
+	// }
+}
+
 func main() {
 	client := connectDB()
 	usersCol = client.Database("go-ginFileRepo").Collection("Users")
@@ -236,19 +281,22 @@ func main() {
 		ctx.HTML(http.StatusOK, "signIn.html", nil)
 	})
 	router.POST("/signIn", signIn)
+	router.GET("/signOut", signOut)
 
 	user := router.Group("/files")
 	user.Use(JWTMiddleware())
-	user.GET("/viewFiles", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, bson.M{"status": 200})
-	})
+	user.GET("/viewFiles", viewFiles)
 	user.GET("/upload", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "upload.html", nil)
 	})
 
 	user.POST("/upload", upload)
 
-	router.GET("/signOut", signOut)
-
 	router.Run()
 }
+
+//files/viewFiles  < based on active user
+// file download (save as dialog opening in js?????)
+//file deletion
+//some status bar indicating upload state
+//
