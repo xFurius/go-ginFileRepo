@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -207,7 +208,8 @@ func upload(ctx *gin.Context) {
 	source := rand.NewSource(time.Now().Unix())
 	r := source.Int63() // limit the generated integers number
 	fmt.Println(int(r))
-	filename := strconv.Itoa(int(r)) + file.Filename
+	fileName := strings.ReplaceAll(file.Filename, " ", "_")
+	filename := strconv.Itoa(int(r)) + fileName
 	filesCol.InsertOne(context.Background(), bson.M{"E-mail": getEmail(ctx), "FileName": filename})
 	err = ctx.SaveUploadedFile(file, "./files/"+filename)
 	fmt.Println(err)
@@ -243,10 +245,13 @@ func viewFiles(ctx *gin.Context) {
 	fmt.Println(res)
 
 	// files := make([]string, 0)
+	fmt.Fprintln(ctx.Writer, `<body><form method="post" action="/files/download">`)
 	for _, v := range res {
-		fmt.Fprintln(ctx.Writer, v["FileName"])
+		toSend := `<input type="submit" value="` + v["FileName"].(string) + `" name="file">`
+		fmt.Fprintln(ctx.Writer, toSend)
 		// files = append(files, v["FileName"].(string))
 	}
+	fmt.Fprintln(ctx.Writer, `</form></body>`)
 
 	// fmt.Println(files)
 
@@ -286,17 +291,35 @@ func main() {
 	user := router.Group("/files")
 	user.Use(JWTMiddleware())
 	user.GET("/viewFiles", viewFiles)
+	user.POST("/download", func(ctx *gin.Context) {
+		res, err := io.ReadAll(ctx.Request.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		res = res[5:]
+		fmt.Println(string(res))
+
+		ctx.Header("Content-Disposition", "attachment; filename="+string(res))
+		ctx.Header("Content-Type", ctx.GetHeader("Content-Type"))
+		file, err := os.OpenFile("./files/"+string(res), os.O_RDONLY, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
+		_, err = io.Copy(ctx.Writer, file) //sciezka do pliku)
+		fmt.Println(err)
+
+	})
 	user.GET("/upload", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "upload.html", nil)
 	})
-
 	user.POST("/upload", upload)
 
 	router.Run()
 }
 
 //files/viewFiles  < based on active user
-// file download (save as dialog opening in js?????)
+// file download https://stackoverflow.com/questions/24116147/how-to-download-file-in-browser-from-go-server
 //file deletion
 //some status bar indicating upload state
 //
