@@ -172,7 +172,6 @@ func getToken(ctx *gin.Context) string {
 // jwt middleware
 func JWTMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		fmt.Println(ctx.Request.Cookie("token"))
 		err, _ := validateToken(ctx)
 		if err != nil {
 			ctx.Status(http.StatusUnauthorized)
@@ -206,7 +205,7 @@ func upload(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 	source := rand.NewSource(time.Now().Unix())
-	r := source.Int63() // limit the generated integers number
+	r := source.Int63()
 	fmt.Println(int(r))
 	fileName := strings.ReplaceAll(file.Filename, " ", "_")
 	filename := strconv.Itoa(int(r)) + fileName
@@ -244,26 +243,45 @@ func viewFiles(ctx *gin.Context) {
 
 	fmt.Println(res)
 
-	// files := make([]string, 0)
-	fmt.Fprintln(ctx.Writer, `<body><form method="post" action="/files/download">`)
-	for _, v := range res {
-		toSend := `<input type="submit" value="` + v["FileName"].(string) + `" name="file">`
+	fmt.Fprintln(ctx.Writer, `<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="styleView.css">
+		<title>Document</title>
+	</head>`)
+	fmt.Fprintln(ctx.Writer, `<body><form id="form">`) //method="post" action="/files/download"
+	for i, v := range res {
+		toSend := `<input type="checkbox" value="` + v["FileName"].(string) + `" name="file" id="file` + strconv.Itoa(i) + `"><label for="file` + strconv.Itoa(i) + `">` + v["FileName"].(string) + `</label>`
 		fmt.Fprintln(ctx.Writer, toSend)
-		// files = append(files, v["FileName"].(string))
 	}
-	fmt.Fprintln(ctx.Writer, `</form></body>`)
+	fmt.Fprintln(ctx.Writer, `<input type="submit" formmethod="post" formaction="/files/download" value="download">
+	<input type="submit" formmethod="post" formaction="/files/delete" value="DELETE">
+	</form></body></html>`)
+}
 
-	// fmt.Println(files)
+// file download
+// one file at a time for now
+func download(ctx *gin.Context) {
+	res, err := io.ReadAll(ctx.Request.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	res = res[5:]
+	fmt.Println(string(res))
 
-	// f, err := ioutil.ReadDir("./files")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
+	ctx.Header("Content-Disposition", "attachment; filename="+string(res))
+	ctx.Header("Content-Type", ctx.GetHeader("Content-Type"))
+	file, err := os.OpenFile("./files/"+string(res), os.O_RDONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	_, err = io.Copy(ctx.Writer, file)
+	fmt.Println(err)
 
-	// for _, v := range f {
-	// 	fmt.Println(v.Name())
-	// }
 }
 
 func main() {
@@ -291,35 +309,19 @@ func main() {
 	user := router.Group("/files")
 	user.Use(JWTMiddleware())
 	user.GET("/viewFiles", viewFiles)
-	user.POST("/download", func(ctx *gin.Context) {
-		res, err := io.ReadAll(ctx.Request.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-		res = res[5:]
-		fmt.Println(string(res))
-
-		ctx.Header("Content-Disposition", "attachment; filename="+string(res))
-		ctx.Header("Content-Type", ctx.GetHeader("Content-Type"))
-		file, err := os.OpenFile("./files/"+string(res), os.O_RDONLY, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer file.Close()
-		_, err = io.Copy(ctx.Writer, file) //sciezka do pliku)
-		fmt.Println(err)
-
-	})
+	user.POST("/download", download)
 	user.GET("/upload", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "upload.html", nil)
 	})
 	user.POST("/upload", upload)
+	user.StaticFile("/styleView.css", "./html/styleView.css")
+	user.POST("/delete", func(ctx *gin.Context) {
+		fmt.Println("del")
+	})
 
 	router.Run()
 }
 
-//files/viewFiles  < based on active user
-// file download https://stackoverflow.com/questions/24116147/how-to-download-file-in-browser-from-go-server
 //file deletion
 //some status bar indicating upload state
 //
