@@ -11,6 +11,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -252,7 +253,7 @@ func viewFiles(ctx *gin.Context) {
 		<link rel="stylesheet" href="styleView.css">
 		<title>Document</title>
 	</head>`)
-	fmt.Fprintln(ctx.Writer, `<body><form id="form">`) //method="post" action="/files/download"
+	fmt.Fprintln(ctx.Writer, `<body><form id="form">`)
 	for i, v := range res {
 		toSend := `<input type="checkbox" value="` + v["FileName"].(string) + `" name="file" id="file` + strconv.Itoa(i) + `"><label for="file` + strconv.Itoa(i) + `">` + v["FileName"].(string) + `</label>`
 		fmt.Fprintln(ctx.Writer, toSend)
@@ -282,6 +283,39 @@ func download(ctx *gin.Context) {
 	_, err = io.Copy(ctx.Writer, file)
 	fmt.Println(err)
 
+}
+
+// file deletion
+func delete(ctx *gin.Context) {
+	fmt.Println("del")
+	res, err := io.ReadAll(ctx.Request.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+	res = res[5:]
+	fmt.Println(string(res))
+	_, err = filesCol.DeleteOne(context.Background(), bson.D{{"FileName", string(res)}})
+	fmt.Println(err)
+
+	location := url.URL{Path: "/files/viewFiles"}
+	ctx.Redirect(http.StatusFound, location.RequestURI())
+
+	path := "./files/" + string(res)
+	os.Remove(path)
+
+	// cursor, err := filesCol.Find(context.Background(), bson.D{{"E-mail", user}})
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+
+	// var res []bson.M
+	// if err = cursor.All(context.Background(), &res); err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+
+	// fmt.Println(res)
 }
 
 func main() {
@@ -315,9 +349,7 @@ func main() {
 	})
 	user.POST("/upload", upload)
 	user.StaticFile("/styleView.css", "./html/styleView.css")
-	user.POST("/delete", func(ctx *gin.Context) {
-		fmt.Println("del")
-	})
+	user.POST("/delete", delete)
 
 	router.Run()
 }
