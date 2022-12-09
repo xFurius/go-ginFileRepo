@@ -258,8 +258,8 @@ func viewFiles(ctx *gin.Context) {
 		toSend := `<input type="checkbox" value="` + v["FileName"].(string) + `" name="file" id="file` + strconv.Itoa(i) + `"><label for="file` + strconv.Itoa(i) + `">` + v["FileName"].(string) + `</label>`
 		fmt.Fprintln(ctx.Writer, toSend)
 	}
-	fmt.Fprintln(ctx.Writer, `<input type="submit" formmethod="post" formaction="/files/download" value="download">
-	<input type="submit" formmethod="post" formaction="/files/delete" value="DELETE">
+	fmt.Fprintln(ctx.Writer, `<input type="submit" formmethod="post" formaction="/user/downloadFile" value="download">
+	<input type="submit" formmethod="post" formaction="/user/deleteFile" value="DELETE">
 	</form></body></html>`)
 }
 
@@ -297,25 +297,11 @@ func delete(ctx *gin.Context) {
 	_, err = filesCol.DeleteOne(context.Background(), bson.D{{"FileName", string(res)}})
 	fmt.Println(err)
 
-	location := url.URL{Path: "/files/viewFiles"}
+	location := url.URL{Path: "/user/viewFiles"}
 	ctx.Redirect(http.StatusFound, location.RequestURI())
 
 	path := "./files/" + string(res)
 	os.Remove(path)
-
-	// cursor, err := filesCol.Find(context.Background(), bson.D{{"E-mail", user}})
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-
-	// var res []bson.M
-	// if err = cursor.All(context.Background(), &res); err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-
-	// fmt.Println(res)
 }
 
 func main() {
@@ -340,20 +326,22 @@ func main() {
 	router.POST("/signIn", signIn)
 	router.GET("/signOut", signOut)
 
-	user := router.Group("/files")
+	user := router.Group("/user")
 	user.Use(JWTMiddleware())
 	user.GET("/viewFiles", viewFiles)
-	user.POST("/download", download)
-	user.GET("/upload", func(ctx *gin.Context) {
+	user.POST("/downloadFile", download)
+	user.GET("/uploadFile", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "upload.html", nil)
 	})
-	user.POST("/upload", upload)
+	user.POST("/uploadFile", upload)
 	user.StaticFile("/styleView.css", "./html/styleView.css")
-	user.POST("/delete", delete)
+	user.POST("/deleteFile", delete)
 
 	router.Run()
 }
 
-//file deletion
+//profile view
+//acc deletion
+//password change
 //some status bar indicating upload state
 //
