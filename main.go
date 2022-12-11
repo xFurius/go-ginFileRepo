@@ -321,9 +321,21 @@ func main() {
 	router.POST("/signUp", signUp)
 
 	router.GET("/signIn", func(ctx *gin.Context) {
+		session := sessions.Default(ctx)
+		tkn := session.Get("token")
+		fmt.Println(tkn)
+		if tkn != "" && tkn != nil {
+			location := url.URL{Path: "/user/viewFiles"}
+			ctx.Redirect(http.StatusFound, location.RequestURI())
+		}
+
 		ctx.HTML(http.StatusOK, "signIn.html", nil)
 	})
 	router.POST("/signIn", signIn)
+	router.StaticFile("/html/style.css", "./html/style.css")
+	router.StaticFile("/assets/stacked-files.png", "./assets/stacked-files.png")
+	router.StaticFile("/assets/mail.png", "./assets/mail.png")
+	router.StaticFile("/assets/padlock.png", "./assets/padlock.png")
 	router.GET("/signOut", signOut)
 
 	user := router.Group("/user")
@@ -336,6 +348,10 @@ func main() {
 	user.POST("/uploadFile", upload)
 	user.StaticFile("/styleView.css", "./html/styleView.css")
 	user.POST("/deleteFile", delete)
+	user.GET("/profile", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "profile.html", nil)
+		ctx.String(http.StatusOK, `<div class="email">`+getEmail(ctx)+`</div>`)
+	})
 
 	router.Run()
 }
