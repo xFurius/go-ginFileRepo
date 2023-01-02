@@ -199,22 +199,6 @@ func signOut(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-// upload
-func upload(ctx *gin.Context) {
-	file, err := ctx.FormFile("test")
-	if err != nil {
-		log.Fatal(err)
-	}
-	source := rand.NewSource(time.Now().Unix())
-	r := source.Int63()
-	fmt.Println(int(r))
-	fileName := strings.ReplaceAll(file.Filename, " ", "_")
-	filename := strconv.Itoa(int(r)) + fileName
-	filesCol.InsertOne(context.Background(), bson.M{"E-mail": getEmail(ctx), "FileName": filename})
-	err = ctx.SaveUploadedFile(file, "./files/"+filename)
-	fmt.Println(err)
-}
-
 // get email form token
 func getEmail(ctx *gin.Context) string {
 	err, claims := validateToken(ctx)
@@ -225,6 +209,24 @@ func getEmail(ctx *gin.Context) string {
 	fmt.Println(claims)
 
 	return claims["sub"].(string)
+}
+
+// upload
+func upload(ctx *gin.Context) {
+	file, err := ctx.FormFile("test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	source := rand.NewSource(time.Now().Unix())
+	r := source.Int63()
+	fmt.Println(int(r))
+
+	replacer := strings.NewReplacer(" ", "_", "(", "_", ")", "_")
+	fileName := replacer.Replace(file.Filename)
+	filename := strconv.Itoa(int(r)) + fileName
+	filesCol.InsertOne(context.Background(), bson.M{"E-mail": getEmail(ctx), "FileName": filename})
+	err = ctx.SaveUploadedFile(file, "./files/"+filename)
+	fmt.Println(err)
 }
 
 // displaying files uploaded by logged in user
@@ -258,14 +260,135 @@ func viewFiles(ctx *gin.Context) {
 		toSend := `<input type="checkbox" value="` + v["FileName"].(string) + `" name="file" id="file` + strconv.Itoa(i) + `"><label for="file` + strconv.Itoa(i) + `">` + v["FileName"].(string) + `</label>`
 		fmt.Fprintln(ctx.Writer, toSend)
 	}
-	fmt.Fprintln(ctx.Writer, `<input type="submit" formmethod="post" formaction="/user/downloadFile" value="download">
+	fmt.Fprintln(ctx.Writer, `<input type="submit" id="btnDownload" value="download" formmethod="post" formaction="/user/downloadFile" >
 	<input type="submit" formmethod="post" formaction="/user/deleteFile" value="DELETE">
-	</form></body></html>`)
+	</form>
+	</body></html>`)
+	// <script>
+	// // btnDownload.addEventListener('submit', () => {
+	// // 	e.preventDefault();
+	// // 			list = document.querySelectorAll('form > input[type=checkbox]');
+	// // 			list.forEach(e => {
+	// // 			  if (e.checked) {
+	// // 				console.log(e.name)
+
+	// // 				// const data = {
+	// // 				// 	file: e.value
+	// // 				// }
+
+	// // 				const data = new URLSearchParams()
+	// // 				data.append('file', e.value)
+
+	// // 				fetch('http://localhost:3000/user/downloadFile', {
+	// // 									method: 'POST',
+	// // 									body: data,
+	// // 								})
+	// // 								.then(response => {
+	// // 									//
+	// // 								})
+	// // 								.catch(err => console.log(err))
+
+	// // 			  }
+
+	// // 			})
+	// // 		})
+
+	// // function test(e){
+	// // 	e.preventDefault();
+	// // 	console.log("test")
+
+	// // 	list = document.querySelectorAll('form > input[type=checkbox]');
+	// // 			list.forEach(e => {
+	// // 			  if (e.checked) {
+	// // 				console.log(e.name)
+
+	// // 				// const data = {
+	// // 				// 	file: e.value
+	// // 				// }
+
+	// // 				const data = new URLSearchParams()
+	// // 				data.append('file', e.value)
+
+	// // 				fetch('http://localhost:3000/user/downloadFile', {
+	// // 									method: 'POST',
+	// // 									body: data,
+	// // 								})
+	// // 								.then(response => {
+	// // 									console.log("succes")
+	// // 								})
+	// // 								.catch(err => console.log(err))
+
+	// // 			  }
+
+	// // 			})
+	// // }
+	// </script>
+
+	// NEXT TO FIX
+	// IN REQUEST CONTENT LENGHTH IS 0
+	// FIGURE OUT WHY
+
+	// formmethod="post" formaction="/user/deleteFile"
+	// formmethod="post" formaction="/user/downloadFile"
+
+	// btnDownload.addEventListener
+	// btnDelete
+	// btnDownload.addEventListener('click', () => {
+	// 	list = document.querySelectorAll('form > input[type=checkbox]');
+	// 	list.forEach(e => {
+	// 	if(e.checked){
+	// 	console.log(e.value)
+	// 	}
+	// 	})
+	// 	})
+
+	//https://jsfiddle.net/06vqty4w/34/
+	// <script>
+	// 	btnDownload.addEventListener('submit', () => {
+	// 		list = document.querySelectorAll('form > input[type=checkbox]');
+	// 		//const files = [];
+	// 		list.forEach(e => {
+	// 		  if (e.checked) {
+	// 			// console.log(e.value)
+	// 			// files.push(e.value)
+	// 			fetch('http://localhost:3000/user/downloadFile', {
+	// 				method: 'POST',
+	// 				headers: {
+	// 					'Content-Type':'text/plain',
+	// 				},
+	// 				body: e.value,
+	// 			})
+	// 			.then(response => {
+	// 				//
+	// 			})
+	// 			.catch(err => console.log(err))
+
+	// 		  }
+	// 		})
+
+	// 				//   fetch('http://localhost:3000/user/downloadFile', {
+	// 				// 	  method: 'POST',
+	// 				// 	  headers: {
+	// 				// 		  'Content-Type':'application/json',
+	// 				// 	  },
+	// 				// 	  body: JSON.stringify(files),
+	// 				//   })
+	// 				//   .then(response => {
+	// 				// 	  response.json()
+	// 				//   })
+	// 				//   .catch(err => console.log(err))
+	// 	  })
+
+	// 	</script>
 }
 
 // file download
 // one file at a time for now
 func download(ctx *gin.Context) {
+
+	//now this
+	// split and goroutine
+	// mby waitgroup
 	res, err := io.ReadAll(ctx.Request.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -274,34 +397,37 @@ func download(ctx *gin.Context) {
 	fmt.Println(string(res))
 
 	ctx.Header("Content-Disposition", "attachment; filename="+string(res))
-	ctx.Header("Content-Type", ctx.GetHeader("Content-Type"))
+	ctx.Header("Content-Type", "application/x-www-form-urlencoded")
 	file, err := os.OpenFile("./files/"+string(res), os.O_RDONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
-	_, err = io.Copy(ctx.Writer, file)
-	fmt.Println(err)
-
+	w, err := io.Copy(ctx.Writer, file)
+	fmt.Println(err, w)
 }
 
 // file deletion
 func delete(ctx *gin.Context) {
-	fmt.Println("del")
 	res, err := io.ReadAll(ctx.Request.Body)
 	if err != nil {
 		fmt.Println(err)
 	}
-	res = res[5:]
 	fmt.Println(string(res))
-	_, err = filesCol.DeleteOne(context.Background(), bson.D{{"FileName", string(res)}})
-	fmt.Println(err)
+
+	tempR := strings.ReplaceAll(string(res), "file=", "")
+	files := strings.Split(tempR, "&")
+	fmt.Println(files)
+
+	for _, v := range files {
+		_, err = filesCol.DeleteOne(context.Background(), bson.D{{"FileName", v}})
+		path := "./files/" + v
+		os.Remove(path)
+	}
 
 	location := url.URL{Path: "/user/viewFiles"}
 	ctx.Redirect(http.StatusFound, location.RequestURI())
 
-	path := "./files/" + string(res)
-	os.Remove(path)
 }
 
 func main() {
@@ -356,8 +482,9 @@ func main() {
 	router.Run()
 }
 
-//profile view
-//acc deletion
-//password change
-//some status bar indicating upload state
-//
+// profile view
+// acc deletion
+// password change
+// some status bar indicating upload state
+// download few files at once
+// upload few files at once
