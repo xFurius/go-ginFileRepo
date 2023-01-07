@@ -255,140 +255,19 @@ func viewFiles(ctx *gin.Context) {
 		<link rel="stylesheet" href="styleView.css">
 		<title>Document</title>
 	</head>`)
-	fmt.Fprintln(ctx.Writer, `<body><form id="form">`)
+	fmt.Fprintln(ctx.Writer, `<body><form>`)
 	for i, v := range res {
 		toSend := `<input type="checkbox" value="` + v["FileName"].(string) + `" name="file" id="file` + strconv.Itoa(i) + `"><label for="file` + strconv.Itoa(i) + `">` + v["FileName"].(string) + `</label>`
 		fmt.Fprintln(ctx.Writer, toSend)
 	}
-	fmt.Fprintln(ctx.Writer, `<input type="submit" id="btnDownload" value="download" formmethod="post" formaction="/user/downloadFile" >
+	fmt.Fprintln(ctx.Writer, `<input type="submit" id="btnDownload" value="download" formmethod="post" formaction="/user/downloadFile">
 	<input type="submit" formmethod="post" formaction="/user/deleteFile" value="DELETE">
-	</form>
-	</body></html>`)
-	// <script>
-	// // btnDownload.addEventListener('submit', () => {
-	// // 	e.preventDefault();
-	// // 			list = document.querySelectorAll('form > input[type=checkbox]');
-	// // 			list.forEach(e => {
-	// // 			  if (e.checked) {
-	// // 				console.log(e.name)
-
-	// // 				// const data = {
-	// // 				// 	file: e.value
-	// // 				// }
-
-	// // 				const data = new URLSearchParams()
-	// // 				data.append('file', e.value)
-
-	// // 				fetch('http://localhost:3000/user/downloadFile', {
-	// // 									method: 'POST',
-	// // 									body: data,
-	// // 								})
-	// // 								.then(response => {
-	// // 									//
-	// // 								})
-	// // 								.catch(err => console.log(err))
-
-	// // 			  }
-
-	// // 			})
-	// // 		})
-
-	// // function test(e){
-	// // 	e.preventDefault();
-	// // 	console.log("test")
-
-	// // 	list = document.querySelectorAll('form > input[type=checkbox]');
-	// // 			list.forEach(e => {
-	// // 			  if (e.checked) {
-	// // 				console.log(e.name)
-
-	// // 				// const data = {
-	// // 				// 	file: e.value
-	// // 				// }
-
-	// // 				const data = new URLSearchParams()
-	// // 				data.append('file', e.value)
-
-	// // 				fetch('http://localhost:3000/user/downloadFile', {
-	// // 									method: 'POST',
-	// // 									body: data,
-	// // 								})
-	// // 								.then(response => {
-	// // 									console.log("succes")
-	// // 								})
-	// // 								.catch(err => console.log(err))
-
-	// // 			  }
-
-	// // 			})
-	// // }
-	// </script>
-
-	// NEXT TO FIX
-	// IN REQUEST CONTENT LENGHTH IS 0
-	// FIGURE OUT WHY
-
-	// formmethod="post" formaction="/user/deleteFile"
-	// formmethod="post" formaction="/user/downloadFile"
-
-	// btnDownload.addEventListener
-	// btnDelete
-	// btnDownload.addEventListener('click', () => {
-	// 	list = document.querySelectorAll('form > input[type=checkbox]');
-	// 	list.forEach(e => {
-	// 	if(e.checked){
-	// 	console.log(e.value)
-	// 	}
-	// 	})
-	// 	})
-
-	//https://jsfiddle.net/06vqty4w/34/
-	// <script>
-	// 	btnDownload.addEventListener('submit', () => {
-	// 		list = document.querySelectorAll('form > input[type=checkbox]');
-	// 		//const files = [];
-	// 		list.forEach(e => {
-	// 		  if (e.checked) {
-	// 			// console.log(e.value)
-	// 			// files.push(e.value)
-	// 			fetch('http://localhost:3000/user/downloadFile', {
-	// 				method: 'POST',
-	// 				headers: {
-	// 					'Content-Type':'text/plain',
-	// 				},
-	// 				body: e.value,
-	// 			})
-	// 			.then(response => {
-	// 				//
-	// 			})
-	// 			.catch(err => console.log(err))
-
-	// 		  }
-	// 		})
-
-	// 				//   fetch('http://localhost:3000/user/downloadFile', {
-	// 				// 	  method: 'POST',
-	// 				// 	  headers: {
-	// 				// 		  'Content-Type':'application/json',
-	// 				// 	  },
-	// 				// 	  body: JSON.stringify(files),
-	// 				//   })
-	// 				//   .then(response => {
-	// 				// 	  response.json()
-	// 				//   })
-	// 				//   .catch(err => console.log(err))
-	// 	  })
-
-	// 	</script>
+	</form></body></html>`)
 }
 
 // file download
 // one file at a time for now
 func download(ctx *gin.Context) {
-
-	//now this
-	// split and goroutine
-	// mby waitgroup
 	res, err := io.ReadAll(ctx.Request.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -396,15 +275,7 @@ func download(ctx *gin.Context) {
 	res = res[5:]
 	fmt.Println(string(res))
 
-	ctx.Header("Content-Disposition", "attachment; filename="+string(res))
-	ctx.Header("Content-Type", "application/x-www-form-urlencoded")
-	file, err := os.OpenFile("./files/"+string(res), os.O_RDONLY, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	w, err := io.Copy(ctx.Writer, file)
-	fmt.Println(err, w)
+	ctx.FileAttachment("./files/"+string(res), string(res))
 }
 
 // file deletion
