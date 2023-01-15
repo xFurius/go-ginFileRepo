@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"math/rand"
@@ -29,6 +30,7 @@ import (
 
 var usersCol *mongo.Collection
 var filesCol *mongo.Collection
+var templates *template.Template
 
 type User struct {
 	Email    string `json:"email"`
@@ -230,39 +232,24 @@ func upload(ctx *gin.Context) {
 }
 
 // displaying files uploaded by logged in user
-func viewFiles(ctx *gin.Context) {
+func viewFilesData(ctx *gin.Context) []string {
 	user := getEmail(ctx)
 	cursor, err := filesCol.Find(context.Background(), bson.D{{"E-mail", user}})
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
 
 	var res []bson.M
 	if err = cursor.All(context.Background(), &res); err != nil {
 		fmt.Println(err)
-		return
 	}
 
-	fmt.Println(res)
-
-	fmt.Fprintln(ctx.Writer, `<!DOCTYPE html>
-	<html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<link rel="stylesheet" href="styleView.css">
-		<title>Document</title>
-	</head>`)
-	fmt.Fprintln(ctx.Writer, `<body><form>`)
-	for i, v := range res {
-		toSend := `<input type="checkbox" value="` + v["FileName"].(string) + `" name="file" id="file` + strconv.Itoa(i) + `"><label for="file` + strconv.Itoa(i) + `">` + v["FileName"].(string) + `</label>`
-		fmt.Fprintln(ctx.Writer, toSend)
+	files := make([]string, 0)
+	for _, v := range res {
+		files = append(files, v["FileName"].(string))
 	}
-	fmt.Fprintln(ctx.Writer, `<input type="submit" id="btnDownload" value="download" formmethod="post" formaction="/user/downloadFile">
-	<input type="submit" formmethod="post" formaction="/user/deleteFile" value="DELETE">
-	</form></body></html>`)
+
+	return files
 }
 
 // file download
@@ -306,8 +293,13 @@ func main() {
 	usersCol = client.Database("go-ginFileRepo").Collection("Users")
 	filesCol = client.Database("go-ginFileRepo").Collection("Files")
 
+	templates, err := template.ParseGlob("./html/*.html")
+	if err != nil {
+		fmt.Println(err)
+	}
 	router := gin.Default()
-	router.LoadHTMLGlob("./html/*")
+
+	router.LoadHTMLGlob("./html/*.html")
 
 	store := sessions.NewCookieStore([]byte(os.Getenv("TOKEN_SECRET")))
 	router.Use(sessions.Sessions("session", store))
@@ -337,7 +329,13 @@ func main() {
 
 	user := router.Group("/user")
 	user.Use(JWTMiddleware())
-	user.GET("/viewFiles", viewFiles)
+	user.GET("/viewFiles", func(ctx *gin.Context) {
+		files := viewFilesData(ctx)
+		fmt.Println(files)
+		if err := templates.ExecuteTemplate(ctx.Writer, "viewFiles.html", files); err != nil {
+			fmt.Println(err)
+		}
+	})
 	user.POST("/downloadFile", download)
 	user.GET("/uploadFile", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "upload.html", nil)
@@ -345,10 +343,6 @@ func main() {
 	user.POST("/uploadFile", upload)
 	user.StaticFile("/styleView.css", "./html/styleView.css")
 	user.POST("/deleteFile", delete)
-	user.GET("/profile", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "profile.html", nil)
-		ctx.String(http.StatusOK, `<div class="email">`+getEmail(ctx)+`</div>`)
-	})
 
 	router.Run()
 }

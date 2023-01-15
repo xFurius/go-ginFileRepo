@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="styleView.css">
+	<title>Files</title>
+</head>
+<body>
+<form>
+	<div class="files">
+		{{range .}}
+		<input type="checkbox" value="{{.}}" name="file" id="{{.}}"><label for="{{.}}">{{.}}</label><br/>
+		{{end}}
+	</div>
+	<input type="submit" value="download" formmethod="post" formaction="/user/downloadFile">
+	<input type="submit" value="delete" formmethod="post" formaction="/user/deleteFile">
+</form>
+</body>
+</html>
