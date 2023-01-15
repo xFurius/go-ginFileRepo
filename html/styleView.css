@@ -4,9 +4,17 @@ input[type="checkbox"]:checked {
     left: -9999%;
 }
 
+.files{
+    display:flex;
+    margin:20px;
+    flex-wrap:wrap;
+}
+
 input[type="checkbox"] + label {
+    margin:5px;
     height: 248px;
     width: 293px;
+    overflow-wrap:break-word;
     display: inline-block;
     padding: 10px;
     cursor: pointer;
