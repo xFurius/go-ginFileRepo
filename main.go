@@ -223,16 +223,23 @@ func upload(ctx *gin.Context) {
 	r := source.Int63()
 	fmt.Println(int(r))
 
-	replacer := strings.NewReplacer(" ", "_", "(", "_", ")", "_")
+	ext := strings.Split(file.Filename, ".")[len(strings.Split(file.Filename, "."))-1]
+	fmt.Println(ext)
+
+	replacer := strings.NewReplacer(" ", "_", "(", "_", ")", "_", ".", "_")
 	fileName := replacer.Replace(file.Filename)
-	filename := strconv.Itoa(int(r)) + fileName
-	filesCol.InsertOne(context.Background(), bson.M{"E-mail": getEmail(ctx), "FileName": filename})
+	filename := fileName + strconv.Itoa(int(r)) + "." + ext
+
+	uploadDate := time.Now().Format("2006-01-02 3:04:05 pm")
+	fmt.Println(uploadDate)
+
+	filesCol.InsertOne(context.Background(), bson.M{"E-mail": getEmail(ctx), "FileName": filename, "UploadDate": uploadDate, "FileSize": file.Size, "FileType": strings.Split(filename, ".")[1]})
 	err = ctx.SaveUploadedFile(file, "./files/"+filename)
 	fmt.Println(err)
 }
 
 // displaying files uploaded by logged in user
-func viewFilesData(ctx *gin.Context) []string {
+func viewFilesData(ctx *gin.Context) ([]string, map[string][]string) {
 	user := getEmail(ctx)
 	cursor, err := filesCol.Find(context.Background(), bson.D{{"E-mail", user}})
 	if err != nil {
@@ -245,11 +252,18 @@ func viewFilesData(ctx *gin.Context) []string {
 	}
 
 	files := make([]string, 0)
+	fileData := make(map[string][]string, 0)
 	for _, v := range res {
 		files = append(files, v["FileName"].(string))
+		temp := []string{
+			//uploadDate, fileSize, FileType
+			// TODO: convert btyes to kb/mb/gb
+			v["UploadDate"].(string), fmt.Sprint(v["FileSize"].(int64)), v["FileType"].(string),
+		}
+		fileData[v["FileName"].(string)] = temp
 	}
 
-	return files
+	return files, fileData
 }
 
 // file download
@@ -321,18 +335,33 @@ func main() {
 		ctx.HTML(http.StatusOK, "signIn.html", nil)
 	})
 	router.POST("/signIn", signIn)
+	router.GET("/signOut", signOut)
+
 	router.StaticFile("/html/style.css", "./html/style.css")
 	router.StaticFile("/assets/stacked-files.png", "./assets/stacked-files.png")
 	router.StaticFile("/assets/mail.png", "./assets/mail.png")
 	router.StaticFile("/assets/padlock.png", "./assets/padlock.png")
-	router.GET("/signOut", signOut)
+	router.StaticFile("/assets/download.png", "./assets/download.png")
+	router.StaticFile("/assets/delete.png", "./assets/delete.png")
+	router.StaticFile("/assets/info.png", "./assets/info.png")
+	router.StaticFile("/assets/upload.png", "./assets/upload.png")
+	router.StaticFile("/assets/files.png", "./assets/files.png")
+	router.StaticFile("/assets/user.png", "./assets/user.png")
 
 	user := router.Group("/user")
 	user.Use(JWTMiddleware())
 	user.GET("/viewFiles", func(ctx *gin.Context) {
-		files := viewFilesData(ctx)
+		files, fileData := viewFilesData(ctx)
 		fmt.Println(files)
-		if err := templates.ExecuteTemplate(ctx.Writer, "viewFiles.html", files); err != nil {
+		fmt.Println(fileData)
+		data := struct {
+			Email    string
+			Files    []string
+			FileData map[string][]string
+		}{
+			getEmail(ctx), files, fileData,
+		}
+		if err := templates.ExecuteTemplate(ctx.Writer, "viewFiles.html", data); err != nil {
 			fmt.Println(err)
 		}
 	})
@@ -343,6 +372,11 @@ func main() {
 	user.POST("/uploadFile", upload)
 	user.StaticFile("/styleView.css", "./html/styleView.css")
 	user.POST("/deleteFile", delete)
+	// user.GET("/profile", func(ctx *gin.Context) {
+	// 	if err := templates.ExecuteTemplate(ctx.Writer, "profile.html", map[string]interface{}{"twest": "test"}); err != nil {
+	// 		fmt.Println(err)
+	// 	}
+	// })
 
 	router.Run()
 }
