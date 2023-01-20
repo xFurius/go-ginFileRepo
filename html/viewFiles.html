@@ -4,18 +4,71 @@
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	{{if .Files}}
 	<link rel="stylesheet" href="styleView.css">
+	{{else}}
+	<style>
+		h3{
+			font-size: 56px;
+			text-align: center;
+		}
+		input[type=button]{
+			position: absolute;
+			left:45%;
+			right: 45%;
+			top: 22%;
+			bottom: 75%;
+			border:none;
+		}
+	</style>
+	{{end}}
 	<title>Files</title>
 </head>
 <body>
-<form>
+	<form>
+	<div class="header">
+		<div class="btns">
+			{{if .Files}}
+			<button type="submit" formmethod="post" formaction="/user/downloadFile"><img src="/assets/download.png" height="25px" width="25px"></button>
+			<button type="submit" formmethod="post" formaction="/user/deleteFile"><img src="/assets/delete.png" height="25px" width="25px"></button>
+			<button type="button" id="btnInfo"><img src="/assets/info.png" height="25px" width="25px"></button>
+			<a href="/user/uploadFile"><button type="button"><img src="/assets/upload.png" height="25px" width="25px"></button></a>
+			{{end}}
+		</div>
+		<div class="user">
+			<div>
+				<span>{{.Email}}</span>
+			</div>
+			<img id="profileClick" src="/assets/user.png" width="50px" height="50px">
+		</div>
+	</div>
+	<div class="main" id="mainDiv">
+	{{if .Files}}
 	<div class="files">
-		{{range .}}
-		<input type="checkbox" value="{{.}}" name="file" id="{{.}}"><label for="{{.}}">{{.}}</label><br/>
+		{{range .Files}}
+		<input type="checkbox" value="{{.}}" name="file" id="{{.}}"><label for="{{.}}"><img src="/assets/files.png" height="65px" width="60px">{{.}}</label><br/>
 		{{end}}
 	</div>
-	<input type="submit" value="download" formmethod="post" formaction="/user/downloadFile">
-	<input type="submit" value="delete" formmethod="post" formaction="/user/deleteFile">
+	<div class="klasa">
+
+	</div>
+	{{else}}
+	<h3>Your file repository is empty, start by uploading some files</h3><br/>
+	<a href="/user/uploadFile"><input type="button" value="Upload"></a>
+	{{end}}
+</div>
 </form>
+<script>
+	profileClick.addEventListener('click', ()=>{
+		document.querySelector(".klasa").classList.remove('cokolwiek')
+		document.querySelector(".files").classList.remove('cokolwiek2')
+
+		})
+
+	btnInfo.addEventListener('click', ()=>{
+		document.querySelector(".klasa").classList.toggle('cokolwiek')
+		document.querySelector(".files").classList.toggle('cokolwiek2')
+	})
+</script>
 </body>
 </html>
