@@ -49,8 +49,8 @@
 		<input type="checkbox" value="{{.}}" name="file" id="{{.}}"><label for="{{.}}"><img src="/assets/files.png" height="65px" width="60px">{{.}}</label><br/>
 		{{end}}
 	</div>
-	<div class="klasa">
-
+	<div class="klasa" id="filesDiv">
+		
 	</div>
 	{{else}}
 	<h3>Your file repository is empty, start by uploading some files</h3><br/>
@@ -62,12 +62,43 @@
 	profileClick.addEventListener('click', ()=>{
 		document.querySelector(".klasa").classList.remove('cokolwiek')
 		document.querySelector(".files").classList.remove('cokolwiek2')
-
 		})
 
 	btnInfo.addEventListener('click', ()=>{
-		document.querySelector(".klasa").classList.toggle('cokolwiek')
+		const fileData = new Map()
+		{{range $index, $element := .FileData}}
+			fileData.set({{$index}}, {{$element}})
+		{{end}}
+		console.log(fileData)
+
+		//range over selected checkboxes
+		let list = document.querySelectorAll(".files input[type=checkbox]:checked")
+		if(list.length>0){
+			let properties = ["File Name: ", "Upload Date: ", "File Size: ", "File Type: "]
+			list.forEach(e => {
+			let temp = fileData.get(e.value)
+			filesDiv.innerHTML += `<span>${properties[0]} ${e.value}</span></br>`
+			temp.forEach((v,i) =>{
+				filesDiv.innerHTML += `<span>${properties[i+1]} ${v}</span></br>`
+			})
+		})
+
+// 		list.forEach( item=>{
+// 			let properties = ["File Name: ", "Upload Date: ", "File Size: ", "File Type: "]
+//    const {value}=item;
+//    const buff = fileData.get(value);
+//   filesDiv.innerHTML+= `<span>${properties[0]} ${value}</span></br>`
+
+// buff.slice(1,buff.length-1).forEach(item=> filesDiv.innerHTML += `<span>${item}</span></br>`);
+
+// });
+
+		if(!document.querySelector(".klasa").classList.toggle('cokolwiek')){
+			filesDiv.innerHTML = ""
+		}
 		document.querySelector(".files").classList.toggle('cokolwiek2')
+		}
+		
 	})
 </script>
 </body>
