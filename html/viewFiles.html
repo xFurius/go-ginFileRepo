@@ -42,14 +42,14 @@
 			<img id="profileClick" src="/assets/user.png" width="50px" height="50px">
 		</div>
 	</div>
-	<div class="main" id="mainDiv">
+	<div class="main">
 	{{if .Files}}
 	<div class="files">
 		{{range .Files}}
 		<input type="checkbox" value="{{.}}" name="file" id="{{.}}"><label for="{{.}}"><img height="65px" width="50px">{{.}}</label><br/>
 		{{end}}
 	</div>
-	<div class="klasa" id="filesDiv">
+	<div class="properties" id="filesDiv">
 		
 	</div>
 	{{else}}
@@ -133,8 +133,8 @@
 	})
 	
 	profileClick.addEventListener('click', ()=>{
-		document.querySelector(".klasa").classList.remove('cokolwiek')
-		document.querySelector(".files").classList.remove('cokolwiek2')
+		document.querySelector(".properties").classList.remove('visible')
+		document.querySelector(".files").classList.remove('widthChange')
 		})
 
 	btnInfo.addEventListener('click', ()=>{
@@ -143,9 +143,9 @@
 		if(list.length>0){
 			let properties = ["File Name: ", "Upload Date: ", "File Size: ", "File Type: "]
 			list.forEach(e => {
-			let temp = fileData.get(e.value)
-			filesDiv.innerHTML += `</br><span>${properties[0]} <br/> &emsp;${e.value}</span></br>`
-			temp.forEach((v,i) =>{
+				let temp = fileData.get(e.value)
+				filesDiv.innerHTML += `</br><span>${properties[0]} <br/> &emsp;${e.value}</span></br>`
+				temp.forEach((v,i) =>{
 				filesDiv.innerHTML += `<span>${properties[i+1]} <br/> &emsp;${v}</span></br>`
 			})
 			filesDiv.innerHTML += `<br/><hr>`
@@ -163,11 +163,12 @@
 
 // });
 
-		if(!document.querySelector(".klasa").classList.toggle('cokolwiek')){
+		if(!document.querySelector(".properties").classList.toggle('visible')){
 			filesDiv.innerHTML = ""
 		}
-		document.querySelector(".files").classList.toggle('cokolwiek2')
+		document.querySelector(".files").classList.toggle('widthChange')
 		}
+
 		
 	})
 </script>
