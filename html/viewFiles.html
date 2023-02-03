@@ -46,7 +46,7 @@
 	{{if .Files}}
 	<div class="files">
 		{{range .Files}}
-		<input type="checkbox" value="{{.}}" name="file" id="{{.}}"><label for="{{.}}"><img src="/assets/files.png" height="65px" width="60px">{{.}}</label><br/>
+		<input type="checkbox" value="{{.}}" name="file" id="{{.}}"><label for="{{.}}"><img height="65px" width="50px">{{.}}</label><br/>
 		{{end}}
 	</div>
 	<div class="klasa" id="filesDiv">
@@ -59,29 +59,99 @@
 </div>
 </form>
 <script>
+	const fileData = new Map()
+	{{range $index, $element := .FileData}}
+		fileData.set({{$index}}, {{$element}})
+	{{end}}
+
+	const imgs = document.querySelectorAll(".files img")
+	const checkboxes = document.querySelectorAll(".files input[type=checkbox]")
+	console.log(checkboxes[0].value)
+	let index = 0
+	imgs.forEach(img => {
+		let extension = fileData.get(checkboxes[index].value)[2].toUpperCase()
+		console.log(extension)
+
+		const imageEXT = "JPG,PNG,JPEG,GIF,SVG,BMP,PSD,ICO,WEBP,AI"
+		const textEXT = "TXT,DOC,DOCX,CSV,PDF,ODT"
+		const executableEXT = "EXE,MSI,JAR,BAT"
+		const videoEXT = "MP4,AVI,MPG,MPEG" 
+		const compressedEXT = "ZIP,7Z,RAR"
+		const audioEXT = "MP3,WAV"
+		const spreadsheetEXT = "XLS,XLCS"
+
+		if(imageEXT.includes(extension)){
+			img.src = "/assets/imgFile.png"
+		}else if(textEXT.includes(extension)){
+			img.src = "/assets/textFile.png"
+		}else if(executableEXT.includes(extension)){
+			img.src = "/assets/exeFile.png"
+		}else if(videoEXT.includes(extension)){
+			img.src = "/assets/videoFile.png"
+		}else if(compressedEXT.includes(extension)){
+			img.src = "/assets/compressedFile.png"
+		}else if(audioEXT.includes(extension)){
+			img.src = "/assets/audioFile.png"
+		}else if(spreadsheetEXT.includes(extension)){
+			img.src = "/assets/spreadsheetFile.png"
+		}else{
+			img.src = "/assets/file.png"
+		}
+
+		// switch(extension){
+		// 	case "JPG":
+		// 	case "PNG":
+		// 	case "JPEG":
+		// 	case "GIF":
+		// 	case "SVG":
+		// 	case "BMP":
+		// 	case "PSD":
+		// 	case "ICO":
+		// 	case "WEBP":
+		// 	case "AI":
+		// 		img.src = "/assets/imgFile.png"
+		// 		break;
+		// 	case "TXT":
+		// 	case "DOC":
+		// 	case "DOCX":
+		// 	case "CSV":
+		// 	case "PDF":
+		// 	case "ODT":
+		// 		img.src = "/assets/textFile.png"
+		// 		break; 
+		// 	case "EXE":
+		// 	case "MSI": 
+		// 	case "JAR":
+		// 	case "BAT":
+		// 		img.src = "/assets/exeFile.png"
+		// 		break; 
+		// 	default:
+		// 		img.src = "/assets/file.png"
+		// }
+
+		index++
+	})
+	
 	profileClick.addEventListener('click', ()=>{
 		document.querySelector(".klasa").classList.remove('cokolwiek')
 		document.querySelector(".files").classList.remove('cokolwiek2')
 		})
 
 	btnInfo.addEventListener('click', ()=>{
-		const fileData = new Map()
-		{{range $index, $element := .FileData}}
-			fileData.set({{$index}}, {{$element}})
-		{{end}}
-		console.log(fileData)
-
 		//range over selected checkboxes
 		let list = document.querySelectorAll(".files input[type=checkbox]:checked")
 		if(list.length>0){
 			let properties = ["File Name: ", "Upload Date: ", "File Size: ", "File Type: "]
 			list.forEach(e => {
 			let temp = fileData.get(e.value)
-			filesDiv.innerHTML += `<span>${properties[0]} ${e.value}</span></br>`
+			filesDiv.innerHTML += `</br><span>${properties[0]} <br/> &emsp;${e.value}</span></br>`
 			temp.forEach((v,i) =>{
-				filesDiv.innerHTML += `<span>${properties[i+1]} ${v}</span></br>`
+				filesDiv.innerHTML += `<span>${properties[i+1]} <br/> &emsp;${v}</span></br>`
 			})
+			filesDiv.innerHTML += `<br/><hr>`
 		})
+		
+		
 
 // 		list.forEach( item=>{
 // 			let properties = ["File Name: ", "Upload Date: ", "File Size: ", "File Type: "]
