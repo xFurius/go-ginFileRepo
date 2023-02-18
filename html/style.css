@@ -1,134 +1,60 @@
+*{
+    font-size: 30px;
+    font-family: Calibri;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
 body{
-    background:#D7DAE5;
+    background-color: #121B36;
 }
 
-div{
+.divMain{
     position: absolute;
-left: 35%;
-right: 35%;
-top: 15%;
-bottom: 15%;
-
-background: #A6D8D4;
-border-radius: 20px
+    background-color: #F0C26B;
+    top: 15%;
+    bottom: 15%;
+    left: 35%;
+    right: 35%;
+    border-top-left-radius: 20%;
+    border-bottom-right-radius: 20%;
+    text-align: center;
 }
 
-div>img{
-    position: absolute;
-height: 15%;
-    left:5%;
-    top:5%;
-
-filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25));
+button{
+    border: none;
+    background-color: #5B5D71;
+    border-top-left-radius: 20%;
+    border-bottom-right-radius: 20%;
 }
 
-div>span:nth-child(2){
+#btnSignIn{
     position: absolute;
-left: 33%;
-    top: 8%;
-
-font-family: 'Poppins';
-font-style: normal;
-font-weight: 700;
-font-size: 48px;
+    left: 35%;
+    right: 35%;
+    margin-top: 50px;
 }
 
-.signIn{
+.divMain>div:nth-child(1)>p>img{
     position: absolute;
-left: 35%;
-top: 30%;
-
-font-family: 'Poppins';
-font-style: normal;
-font-weight: 700;
-font-size: 30px;
+    top: 3%;
+    left: 11%;
+    height: 100px;
 }
 
-.signUp{
+.imgPadlock{
     position: absolute;
-    left: 40%;
-    top: 25%;
-
-font-family: 'Poppins';
-font-style: normal;
-font-weight: 700;
-font-size: 30px;
-
+    left: 15%;
+    height: 40px;
 }
 
-div>form>label:nth-child(1){
+.imgEmail{
     position: absolute;
-    left:20%;
-top: 40%;
-
-font-family: 'Poppins';
-font-style: normal;
-font-weight: 400;
-font-size: 32px;
+    left: 14%;
+    top: 38%;
+    height: 30px;
 }
 
-div>form>img:nth-child(3){
-    position: absolute;
-height: 5%;
-    top:45%;
-    left:13%;
-    filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25));
-}
-
-div>form>input[type=text]{
-    position: absolute;
-left: 20%;
-    right:20%;
-top: 45%;
-    bottom:50%;
-
-background: #8EAF9D;
-box-shadow: inset 0px 4px 4px rgba(0, 0, 0, 0.25);
-border-radius: 5px;
-    border:none;
-}
-
-div>form>label:nth-child(5){
-    position: absolute;
-left: 20%;
-top: 60%;
-
-font-family: 'Poppins';
-font-style: normal;
-font-weight: 400;
-font-size: 32px;
-}
-
-div>form>input[type=password]{
-    position: absolute;
-left: 20%;
-    right:20%;
-top: 65%;
-    bottom:30%;
-
-background: #8EAF9D;
-box-shadow: inset 0px 4px 4px rgba(0, 0, 0, 0.25);
-border-radius: 5px;
-    border:none;
-}
-
-div>form>img:nth-child(7){
-    position: absolute;
-height: 5%;
-    top:65%;
-    left:13%;
-filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25));
-}
-
-div>form>input[type=button]{
-    position: absolute;
-left: 20%;
-right: 20%;
-top: 80%;
-bottom:15%;
-    
-background: #8EAF9D;
-box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-border-radius: 5px;
-    border:none;
+form{
+    margin-top:100px;
 }

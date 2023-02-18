@@ -4,25 +4,38 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./html/style.css">
+    <link rel="stylesheet" href="/html/style.css">
     <title>Sign In</title>
 </head>
 <body>
-    <div>
-        <img src="/assets/stacked-files.png">
-        <span>Welcome</span>
-        <span class="signIn">Please Sign In</span>
-        <form>
-            <label for="email">E-mail</label><br/><img src="/assets/mail.png"><input type="text" id="email" required>
-            <label for="password">Password</label><br/><img src="/assets/padlock.png"><input type="password" id="password" required>
-            <input type="button" value="Sign In" id="signIn">
-        </form>
+    <div class="divMain">
+        <div>
+            <p><img src="/assets/stackedFiles.png">Welcome</p>
+            <span>Please Sign In</span>
+        </div>
+        <div>
+            <form>
+                <span>E-mail</span><br>
+                <span>
+                    <img src="/assets/mail.png" class="imgEmail">
+                    <input type="text" id="inputEmail" required>
+                </span>
+                <br>
+                <span>Password</span><br>
+                <span>
+                    <img src="/assets/padlock.png" class="imgPadlock">
+                    <input type="password" id="inputPassword" required>
+                </span>
+                <br>
+                <button id="btnSignIn">Sign In</button>
+            </form>
+        </div>
     </div>
     <script>
-        signIn.addEventListener('click', () => {
+        btnSignIn.addEventListener('click', () => {
             const data = {
-                email: email.value,
-                password: password.value
+                email: inputEmail.value,
+                password: inputPassword.value
             }
 
             const uri = 'http://localhost:3000/signIn'
@@ -43,4 +56,4 @@
         })
     </script>
 </body>
-</html>
+</html> 
